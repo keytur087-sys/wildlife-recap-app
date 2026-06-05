@@ -3,19 +3,25 @@ import os
 import moviepy.editor as mp
 from moviepy.video.fx.mirror_x import mirror_x
 from moviepy.video.fx.freeze import freeze
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import edge_tts
 import asyncio
-
-# API Keys Configuration
-GEMINI_API_KEY = "AQ.Ab8RN6IKAuYEDcyVSudnyOpMuiMXQNG75mF0NPaS2ZYZrA3JPA"
-genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(page_title="Wildlife Movie Recap AI", layout="centered")
 st.title("🐾 Wildlife Movie Recap Generator")
 st.write("ဖုန်းဖြင့် အလွယ်တကူ ဗီဒီယိုဖန်တီးနိုင်သော Web App")
 
-# 1. Video Upload File Uploader
+# 1. API Key ချိတ်ဆက်ခြင်း (Streamlit Secrets သို့မဟုတ် ကုဒ်ထဲက Key ကို သုံးရန်)
+if "GEMINI_API_KEY" in st.secrets:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+else:
+    API_KEY = "AQ.Ab8RN6IKAuYEDcyVSudnyOpMuiMXQNG75mF0NPaS2ZYZrA3JPA"
+
+# စနစ်အသစ် (Google GenAI) Client ကို တည်ဆောက်ခြင်း
+client = genai.Client(api_key=API_KEY)
+
+# 2. Video Upload File Uploader
 uploaded_file = st.file_uploader("Wildlife ဗီဒီယိုကို Upload တင်ပါ", type=["mp4", "mov", "avi"])
 
 if uploaded_file is not None:
@@ -28,22 +34,29 @@ if uploaded_file is not None:
         
         original_text_sample = "A hungry leopard stalks its prey in the African savanna, waiting for the perfect moment to strike."
         
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-pro",
-            system_instruction=(
-                "You are a professional Wildlife Movie Recap Content Creator. "
-                "Translate the original script to Burmese. "
-                "Style: Cinematic Wildlife Storytelling + Predator vs Prey Survival Story + Engaging Narrative. "
-                "Do NOT include timestamps, introduction, or outro. Deliver the script as a single cohesive story paragraph. "
-                "မြန်မာဘာသာစကားကို နားထောင်ရ ကြည့်ရှုရ စိတ်လှုပ်ရှားစရာကောင်းအောင် သဘာဝကျကျနှင့် ပီပြင်စွာ ရေးပေးပါ။"
+        # စနစ်အသစ်အရ ခေါ်ယူပုံစံ ပြောင်းလဲထားခြင်း
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",  # လက်ရှိ အကောင်းဆုံးနှင့် အမြန်ဆုံး မော်ဒယ်ကို သုံးထားပါသည်
+                contents=f"Translate and rewrite this: {original_text_sample}",
+                config=types.GenerateContentConfig(
+                    system_instruction=(
+                        "You are a professional Wildlife Movie Recap Content Creator. "
+                        "Translate the original script to Burmese. "
+                        "Style: Cinematic Wildlife Storytelling + Predator vs Prey Survival Story + Engaging Narrative. "
+                        "Do NOT include timestamps, introduction, or outro. Deliver the script as a single cohesive story paragraph. "
+                        "မြန်မာဘာသာစကားကို နားထောင်ရ ကြည့်ရှုရ စိတ်လှုပ်ရှားစရာကောင်းအောင် သဘာဝကျကျနှင့် ပီပြင်စွာ ရေးပေးပါ။"
+                    )
+                )
             )
-        )
-        
-        response = model.generate_content(f"Translate and rewrite this: {original_text_sample}")
-        burmese_script = response.text
-        
-        st.subheader("📝 ဖန်တီးထားသော မြန်မာ Script:")
-        st.write(burmese_script)
+            burmese_script = response.text
+            
+            st.subheader("📝 ဖန်တီးထားသော မြန်မာ Script:")
+            st.write(burmese_script)
+            
+        except Exception as e:
+            st.error(f"AI စာမူဖန်တီးရာတွင် အမှားအယွင်းရှိပါသည်: {str(e)}")
+            st.stop()
 
         st.info("🎙️ အဆင့် ၃: မြန်မာ Voiceover အသံသွင်းနေပါသည်...")
         
