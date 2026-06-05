@@ -8,7 +8,7 @@ import edge_tts
 import asyncio
 
 # API Keys Configuration
-GEMINI_API_KEY = "AIzaSyAQ.Ab8RN6IP6fesKd-0BnYOqd2eMxweAIZEC7AC1uF87Rb4QTATLA"
+GEMINI_API_KEY = "AQ.Ab8RN6IKAuYEDcyVSudnyOpMuiMXQNG75mF0NPaS2ZYZrA3JPA"
 genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(page_title="Wildlife Movie Recap AI", layout="centered")
