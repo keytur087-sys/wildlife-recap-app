@@ -2,4 +2,4 @@ streamlit
 moviepy
 google-generativeai
 edge-tts
-asyncio
+
